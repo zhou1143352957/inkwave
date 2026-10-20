@@ -218,7 +218,12 @@ export class CameraRig {
     // map diorama (eased both ways; reverses smoothly if the key is released mid-swoop)
     const inPlay = this.mode === 'follow' || this.mode === 'spectate';
     const want = this.mapOpen && inPlay ? 1 : 0;
-    this.mapK = want > this.mapK ? Math.min(1, this.mapK + dt / 0.42) : Math.max(0, this.mapK - dt / 0.34);
+    // 注意：这里必须按「目标是否为 1」判断方向，不能写成 want > this.mapK ——
+    // mapK 到达 1 后 `1 > 1` 为假，会走下降分支把值拉回去，下一帧又上升，
+    // 结果每帧在 0.88~1.0 之间锯齿抖动（按住 TAB 时整屏闪烁）。
+    this.mapK = want > 0
+      ? Math.min(1, this.mapK + dt / 0.42)
+      : Math.max(0, this.mapK - dt / 0.34);
     if (this.mapK > 1e-4) {
       this._diorama(dt);
       const e = easeInOut(this.mapK);
