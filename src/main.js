@@ -23,6 +23,7 @@ import { CameraRig } from './game/cameraRig.js';
 import { Match } from './game/match.js';
 import { Minimap } from './game/minimap.js';
 import { Showcase } from './game/showcase.js';
+import { installI18n, setLang } from './i18n.js';
 
 const params = new URLSearchParams(location.search);
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
@@ -47,6 +48,8 @@ class Game {
     // real top-down thumbnails for the stage cards, generated from each layout's geometry
     for (const m of MAPS) { try { m.thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme); } catch (e) { console.warn('thumb', m.id, e); } }
     this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
+    // 界面语言（设置项，默认中文；中文用 DOM 监听方式替换文案，见 src/i18n.js）
+    installI18n(this.settings.lang);
     // v1.1: fov became horizontal — migrate old vertical values once
     if (this.settings.fovMode !== 'h') { this.settings.fov = DEFAULT_SETTINGS.fov; this.settings.fovMode = 'h'; saveJSON('inkwave.settings', this.settings); }
     this.profile = loadJSON('inkwave.profile', DEFAULT_PROFILE);
@@ -320,6 +323,7 @@ class Game {
   _setSettings(partial) {
     Object.assign(this.settings, partial);
     saveJSON('inkwave.settings', this.settings);
+    if ('lang' in partial) setLang(this.settings.lang);
     if ('quality' in partial || 'shadows' in partial || 'bloom' in partial) this.R?.applySettings(this.settings);
     if ('master' in partial || 'music' in partial || 'sfx' in partial) this._applyAudioVolumes();
     if ('colorblind' in partial && G.mode !== 'match') this._setPalette(this._pickPalette());
